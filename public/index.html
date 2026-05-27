@@ -1,43 +1,506 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
-
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
-  </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f2e2a" />
+    <meta name="description" content="DYNA STORE - KHQR.CC Secure Payment Integration" />
+    <title>DYNA STORE | KHQR.CC Secure Payment</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* KHQR Modal - Authentic KHQR.CC Style */
+        .khqr-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+        
+        .khqr-modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .khqr-modal-container {
+            max-width: 480px;
+            width: 90%;
+            background: white;
+            border-radius: 48px;
+            overflow: hidden;
+            transform: scale(0.95) translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.2);
+            box-shadow: 0 30px 50px -20px rgba(0, 0, 0, 0.5);
+        }
+        
+        .khqr-modal-overlay.active .khqr-modal-container {
+            transform: scale(1) translateY(0);
+        }
+        
+        /* QR Container */
+        #qrcode {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: white;
+            padding: 16px;
+            border-radius: 24px;
+        }
+        
+        #qrcode img, #qrcode canvas {
+            width: 220px;
+            height: 220px;
+            border-radius: 20px;
+        }
+        
+        /* Status animations */
+        @keyframes scanPulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.02); }
+        }
+        
+        @keyframes successBounce {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .scanning-animation {
+            animation: scanPulse 1.2s ease-in-out infinite;
+        }
+        
+        .success-icon {
+            animation: successBounce 0.5s cubic-bezier(0.34, 1.2, 0.64, 1);
+        }
+        
+        .timer-warning {
+            animation: pulseWarning 1s infinite;
+        }
+        
+        @keyframes pulseWarning {
+            0%, 100% { color: #ea580c; }
+            50% { color: #f97316; text-shadow: 0 0 2px rgba(234, 88, 12, 0.3); }
+        }
+        
+        .khqr-header-gradient {
+            background: linear-gradient(135deg, #0f2e2a 0%, #1a4a43 100%);
+        }
+        
+        .payment-step {
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        
+        /* Admin Panel Styles */
+        .admin-card {
+            transition: all 0.2s ease;
+        }
+        .admin-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Status badges */
+        .status-pending { background: #fef3c7; color: #d97706; }
+        .status-processing { background: #dbeafe; color: #2563eb; }
+        .status-success { background: #d1fae5; color: #059669; }
+        .status-failed { background: #fee2e2; color: #dc2626; }
+        
+        /* Hide React root initially - will be shown by React */
+        #root {
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- ============================================ -->
+    <!-- IMPORTANT: React Root Element - Your React App renders here -->
+    <!-- ============================================ -->
     <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
+    
+    <!-- ============================================ -->
+    <!-- KHQR.CC PAYMENT MODAL (Global, accessible from React) -->
+    <!-- ============================================ -->
+    <div id="khqrModal" class="khqr-modal-overlay">
+        <div class="khqr-modal-container">
+            <div class="khqr-header-gradient text-white p-5 text-center relative">
+                <button id="closeModalBtn" class="absolute top-4 right-4 text-white/80 hover:text-white text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+                <i class="fas fa-qrcode text-3xl mb-1 opacity-90"></i>
+                <h2 class="text-xl font-bold tracking-wide">KHQR.CC</h2>
+                <div class="mt-2 text-3xl font-black" id="modalAmountDisplay">0.01 USD</div>
+                <p class="text-xs text-white/70 mt-1">Scan with Bakong / ABA / Banking App</p>
+            </div>
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
+            <!-- STEP 1: SHOW QR CODE -->
+            <div id="stepShowQR" class="payment-step p-6 text-center">
+                <div id="qrcode" class="bg-white p-4 rounded-2xl shadow-md inline-block mx-auto"></div>
+                <div class="mt-4 flex items-center justify-center gap-2">
+                    <i class="fas fa-clock text-amber-500"></i>
+                    <span class="text-gray-500 text-sm">Valid for</span>
+                    <span id="timerDisplay" class="font-mono font-bold text-lg text-gray-800">02:00</span>
+                </div>
+                <div class="mt-3 bg-blue-50 rounded-xl p-3 flex items-center justify-center gap-2">
+                    <i class="fas fa-camera text-blue-500"></i>
+                    <i class="fas fa-spinner fa-pulse text-blue-500 hidden" id="scanningSpinner"></i>
+                    <span class="text-blue-700 text-sm font-medium" id="qrStatusText">Waiting for customer to scan QR</span>
+                </div>
+            </div>
 
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
-  </body>
+            <!-- STEP 2: SCANNING STATUS -->
+            <div id="stepScanning" class="payment-step p-6 text-center hidden">
+                <div class="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-2xl p-6 scanning-animation">
+                    <i class="fas fa-spinner fa-pulse text-3xl text-amber-500 mb-3"></i>
+                    <div class="flex items-center justify-center gap-2 mb-2">
+                        <i class="fas fa-qrcode text-amber-600"></i>
+                        <span class="font-bold text-amber-700">Verifying Payment...</span>
+                    </div>
+                    <p class="text-gray-600 text-sm">Checking transaction status with KHQR.CC API</p>
+                    <div class="mt-3 h-1 bg-amber-200 rounded-full overflow-hidden">
+                        <div class="h-full bg-amber-500 rounded-full w-2/3 animate-pulse"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: PAYMENT SUCCESS -->
+            <div id="stepSuccess" class="payment-step p-6 text-center hidden">
+                <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6">
+                    <div class="success-icon">
+                        <div class="bg-green-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto shadow-lg">
+                            <i class="fas fa-check text-white text-3xl"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-2xl font-bold text-green-700 mt-4">Payment Successful!</h3>
+                    <p class="text-gray-600 mt-1">Transaction verified by KHQR.CC</p>
+                    <div class="mt-4 bg-white rounded-xl p-3 text-sm">
+                        <div class="flex justify-between mb-1">
+                            <span class="text-gray-500">Amount</span>
+                            <span class="font-bold text-green-700" id="successAmount">$0.01 USD</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Transaction ID</span>
+                            <span class="font-mono text-xs" id="successTxId">---</span>
+                        </div>
+                    </div>
+                </div>
+                <button id="closeSuccessBtn" class="w-full mt-5 bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 rounded-xl transition-all">
+                    <i class="fas fa-check-circle mr-2"></i>Done
+                </button>
+            </div>
+
+            <div class="text-center text-xs text-gray-400 py-3 border-t">
+                <i class="fas fa-shield-alt"></i> Secured by KHQR.CC Gateway
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // KHQR.CC GLOBAL PAYMENT SYSTEM
+        // Accessible from React via window.KHQRPayment
+        // ============================================================
+        
+        // KHQR.CC Configuration
+        const KHQR_CONFIG = {
+            profileId: "4CT8AuGLx8OkUhCqNdKJhekxw2LULqYa",
+            verifyEndpoint: "https://khqr.cc/api/4CT8AuGLx8OkUhCqNdKJhekxw2LULqYa/payment-gateway/v1/payments/check-trans",
+            secretKey: "YOUR_SECRET_KEY_PLACEHOLDER"
+        };
+        
+        // Orders Database (localStorage for demo)
+        let orders = JSON.parse(localStorage.getItem('khqr_orders') || '[]');
+        let currentOrder = null;
+        let verificationInterval = null;
+        let timerInterval = null;
+        let timeLeftSeconds = 120;
+        let isPaymentCompleted = false;
+        let onSuccessCallback = null;
+        
+        // DOM Elements
+        const modal = document.getElementById('khqrModal');
+        const stepShowQR = document.getElementById('stepShowQR');
+        const stepScanning = document.getElementById('stepScanning');
+        const stepSuccess = document.getElementById('stepSuccess');
+        const timerDisplaySpan = document.getElementById('timerDisplay');
+        const modalAmountDisplay = document.getElementById('modalAmountDisplay');
+        const successAmountSpan = document.getElementById('successAmount');
+        const successTxIdSpan = document.getElementById('successTxId');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const closeSuccessBtn = document.getElementById('closeSuccessBtn');
+        
+        // Save orders
+        function saveOrders() {
+            localStorage.setItem('khqr_orders', JSON.stringify(orders));
+            // Dispatch event for React to update
+            window.dispatchEvent(new CustomEvent('khqr-orders-updated', { detail: orders }));
+        }
+        
+        // Create order
+        function createOrder(amount, orderReference = null) {
+            const order = {
+                id: orderReference || 'ORD_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                transaction_id: null,
+                amount: amount,
+                status: 'pending',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                paymentDetails: null
+            };
+            orders.unshift(order);
+            saveOrders();
+            return order;
+        }
+        
+        // Update order status
+        function updateOrderStatus(orderId, status, transactionId = null, paymentDetails = null) {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                order.status = status;
+                if (transactionId) order.transaction_id = transactionId;
+                if (paymentDetails) order.paymentDetails = paymentDetails;
+                order.updatedAt = new Date().toISOString();
+                saveOrders();
+            }
+        }
+        
+        // SHA1 for API verification
+        async function sha1(str) {
+            const msgBuffer = new TextEncoder().encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-1', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        
+        // Verify transaction with KHQR.CC API
+        async function verifyTransactionWithKHQR(transactionId, orderId) {
+            try {
+                const hashString = KHQR_CONFIG.secretKey + transactionId;
+                const hash = await sha1(hashString);
+                
+                const response = await fetch(KHQR_CONFIG.verifyEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ transaction_id: transactionId, hash: hash })
+                });
+                
+                const result = await response.json();
+                console.log('KHQR Verification:', result);
+                
+                const isPaid = result.responseCode === 0 && result.data && result.data.status && result.data.status.toLowerCase() === 'success';
+                
+                if (isPaid) {
+                    updateOrderStatus(orderId, 'success', transactionId, result.data);
+                    return { success: true, data: result.data };
+                }
+                return { success: false, message: result.responseMessage };
+            } catch (error) {
+                console.error('Verification error:', error);
+                return { success: false, message: error.message };
+            }
+        }
+        
+        // Generate KHQR.CC payment URL
+        function generatePaymentURL(orderId, amount, successUrl) {
+            const baseUrl = "https://khqr.cc/api/payment/request";
+            const params = new URLSearchParams({
+                transaction_id: orderId,
+                amount: amount,
+                success_url: successUrl || `${window.location.origin}?payment_success=${orderId}`,
+                remark: `DYNA_STORE_ORDER_${orderId}`
+            });
+            return `${baseUrl}/${KHQR_CONFIG.profileId}?${params.toString()}`;
+        }
+        
+        // Generate QR Code
+        function generateQRCode(orderId, amount, successUrl) {
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = '';
+            const paymentUrl = generatePaymentURL(orderId, amount, successUrl);
+            
+            if (typeof QRCode !== 'undefined') {
+                new QRCode(qrContainer, {
+                    text: paymentUrl,
+                    width: 220,
+                    height: 220,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            }
+            return paymentUrl;
+        }
+        
+        // Timer functions
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (isPaymentCompleted) return;
+                if (timeLeftSeconds > 0) {
+                    timeLeftSeconds--;
+                    const mins = Math.floor(timeLeftSeconds / 60);
+                    const secs = timeLeftSeconds % 60;
+                    timerDisplaySpan.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                    if (timeLeftSeconds <= 30) {
+                        timerDisplaySpan.classList.add('text-red-600', 'font-bold', 'timer-warning');
+                    }
+                    if (timeLeftSeconds === 0) {
+                        clearInterval(timerInterval);
+                        if (!isPaymentCompleted) closeModal();
+                    }
+                }
+            }, 1000);
+        }
+        
+        function setStep(step) {
+            stepShowQR.classList.add('hidden');
+            stepScanning.classList.add('hidden');
+            stepSuccess.classList.add('hidden');
+            if (step === 'qr') stepShowQR.classList.remove('hidden');
+            else if (step === 'scanning') stepScanning.classList.remove('hidden');
+            else if (step === 'success') stepSuccess.classList.remove('hidden');
+        }
+        
+        // Mark payment as successful
+        async function markPaymentSuccess(transactionId, paymentData) {
+            if (isPaymentCompleted) return;
+            isPaymentCompleted = true;
+            
+            if (timerInterval) clearInterval(timerInterval);
+            if (verificationInterval) clearInterval(verificationInterval);
+            
+            if (currentOrder) {
+                updateOrderStatus(currentOrder.id, 'success', transactionId, paymentData);
+                successAmountSpan.textContent = `$${currentOrder.amount} USD`;
+                successTxIdSpan.textContent = transactionId || 'Verified';
+            }
+            
+            setStep('success');
+            
+            // Call React callback if provided
+            if (onSuccessCallback && currentOrder) {
+                onSuccessCallback({ orderId: currentOrder.id, amount: currentOrder.amount, transactionId });
+            }
+        }
+        
+        // Open payment modal - PUBLIC API for React
+        window.KHQRPayment = {
+            open: async function(amount, orderId = null, onSuccess = null) {
+                // Reset state
+                isPaymentCompleted = false;
+                timeLeftSeconds = 120;
+                onSuccessCallback = onSuccess;
+                
+                // Create or use existing order
+                if (orderId) {
+                    const existingOrder = orders.find(o => o.id === orderId);
+                    if (existingOrder) {
+                        currentOrder = existingOrder;
+                        currentOrder.amount = amount;
+                        currentOrder.status = 'processing';
+                        currentOrder.updatedAt = new Date().toISOString();
+                        saveOrders();
+                    } else {
+                        currentOrder = createOrder(amount, orderId);
+                    }
+                } else {
+                    currentOrder = createOrder(amount);
+                }
+                
+                updateOrderStatus(currentOrder.id, 'processing');
+                modalAmountDisplay.textContent = `${amount} USD`;
+                timerDisplaySpan.textContent = '02:00';
+                
+                // Generate QR
+                generateQRCode(currentOrder.id, amount, window.location.href);
+                
+                // Show modal
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                setStep('qr');
+                startTimer();
+                
+                // Simulate scanning and verification (in production, this would be from webhook)
+                // For demo: after 5 seconds, go to scanning, after 3 more seconds, verify
+                setTimeout(() => {
+                    if (!isPaymentCompleted && currentOrder.status === 'processing') {
+                        setStep('scanning');
+                        
+                        setTimeout(async () => {
+                            if (!isPaymentCompleted) {
+                                // Simulate successful payment with demo transaction ID
+                                const demoTransactionId = 'KHQR_' + Date.now();
+                                await markPaymentSuccess(demoTransactionId, { amount: amount, status: 'success' });
+                            }
+                        }, 3000);
+                    }
+                }, 5000);
+                
+                return currentOrder;
+            },
+            
+            close: function() {
+                if (timerInterval) clearInterval(timerInterval);
+                if (verificationInterval) clearInterval(verificationInterval);
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+                setStep('qr');
+                if (currentOrder && !isPaymentCompleted && currentOrder.status !== 'success') {
+                    updateOrderStatus(currentOrder.id, 'pending');
+                }
+                currentOrder = null;
+                onSuccessCallback = null;
+            },
+            
+            getOrders: function() {
+                return [...orders];
+            },
+            
+            verifyOrder: async function(orderId) {
+                const order = orders.find(o => o.id === orderId);
+                if (!order || !order.transaction_id) {
+                    return { success: false, message: 'No transaction ID found' };
+                }
+                return await verifyTransactionWithKHQR(order.transaction_id, orderId);
+            }
+        };
+        
+        // Modal event listeners
+        if (closeModalBtn) closeModalBtn.addEventListener('click', () => window.KHQRPayment.close());
+        if (closeSuccessBtn) closeSuccessBtn.addEventListener('click', () => window.KHQRPayment.close());
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) window.KHQRPayment.close();
+            });
+        }
+        
+        // Load QR library
+        if (typeof QRCode === 'undefined') {
+            const qrScript = document.createElement('script');
+            qrScript.src = 'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
+            qrScript.onload = () => console.log('QR Code library loaded');
+            document.head.appendChild(qrScript);
+        }
+        
+        console.log('KHQR.CC Payment System Ready. Use window.KHQRPayment.open(amount, orderId, callback)');
+    </script>
+</body>
 </html>
