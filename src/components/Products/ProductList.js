@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import ProductCard from './ProductCard';
 import ProductFilter from './ProductFilter';
@@ -18,12 +18,10 @@ const ProductList = () => {
     maxPrice: ''
   });
 
-  // Load products and categories
   useEffect(() => {
     loadData();
   }, []);
 
-  // Watch for URL param changes - THIS IS THE KEY FIX
   useEffect(() => {
     const categoryFromUrl = searchParams.get('category');
     if (categoryFromUrl) {
@@ -33,7 +31,6 @@ const ProductList = () => {
     }
   }, [location.search, searchParams]);
 
-  // Filter products whenever products or filters change
   useEffect(() => {
     filterProducts();
   }, [products, filters]);
@@ -56,20 +53,16 @@ const ProductList = () => {
   const filterProducts = () => {
     let filtered = [...products];
     
-    // Filter by category
     if (filters.category) {
       filtered = filtered.filter(p => p.category_id === parseInt(filters.category));
-      console.log(`Filtering by category ${filters.category}, found ${filtered.length} products`);
     }
     
-    // Filter by search
     if (filters.search) {
       filtered = filtered.filter(p => 
         p.title.toLowerCase().includes(filters.search.toLowerCase())
       );
     }
     
-    // Filter by price
     if (filters.minPrice) {
       const price = parseFloat(filters.minPrice);
       filtered = filtered.filter(p => {
@@ -91,7 +84,6 @@ const ProductList = () => {
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
-    // Update URL when category changes
     if (newFilters.category) {
       setSearchParams({ category: newFilters.category });
     } else {
@@ -112,7 +104,6 @@ const ProductList = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Sidebar Filter */}
         <div className="lg:w-1/4">
           <ProductFilter 
             categories={categories}
@@ -121,9 +112,7 @@ const ProductList = () => {
           />
         </div>
         
-        {/* Products Grid */}
         <div className="lg:w-3/4">
-          {/* Category Title */}
           {currentCategory && (
             <div className="mb-6">
               <h2 className="text-3xl font-bold text-gray-800">{currentCategory.name}</h2>

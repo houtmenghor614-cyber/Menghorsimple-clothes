@@ -10,7 +10,6 @@ const OrderDetail = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [checkingPayment, setCheckingPayment] = useState(false);
-  const [paymentDetected, setPaymentDetected] = useState(false);
 
   const BASE_URL = 'http://127.0.0.1:8000';
 
@@ -18,9 +17,6 @@ const OrderDetail = () => {
     try {
       const data = await getOrderDetail(id);
       setOrder(data);
-      if (data.status === 'paid') {
-        setPaymentDetected(true);
-      }
     } catch (error) {
       console.error('Failed to load order:', error);
       toast.error('Order not found');
@@ -40,21 +36,17 @@ const OrderDetail = () => {
     
     let isMounted = true;
     let checkCount = 0;
-    const maxChecks = 20; // Check for 60 seconds (20 * 3s)
+    const maxChecks = 20;
     
     const checkPayment = async () => {
       if (!isMounted) return;
       if (order.status !== 'pending') return;
-      if (checkCount >= maxChecks) {
-        console.log('Auto-check stopped after max attempts');
-        return;
-      }
+      if (checkCount >= maxChecks) return;
       
       checkCount++;
       try {
         const result = await verifyPayment(order.order_number);
         if (result.verified && isMounted) {
-          setPaymentDetected(true);
           toast.success('🎉 Payment detected! Your order is now confirmed!', {
             duration: 5000,
             icon: '✅'
@@ -62,14 +54,11 @@ const OrderDetail = () => {
           await loadOrder();
         }
       } catch (error) {
-        // Silent fail, continue checking
+        // Silent fail
       }
     };
     
-    // Check immediately
     checkPayment();
-    
-    // Then check every 3 seconds
     const interval = setInterval(checkPayment, 3000);
     
     return () => {
@@ -82,15 +71,10 @@ const OrderDetail = () => {
     try {
       const response = await initiatePayment(order.id);
       if (response.payment_url) {
-        // Open payment in new tab
         const paymentWindow = window.open(response.payment_url, '_blank');
-        
-        // Show instruction toast
         toast.success('Payment page opened! Complete payment - it will be detected automatically.', {
           duration: 5000
         });
-        
-        // Focus on the payment window
         if (paymentWindow) paymentWindow.focus();
       } else {
         toast.error('No payment URL received');
@@ -290,38 +274,6 @@ const OrderDetail = () => {
                   <div>
                     <p className="font-semibold text-green-800">Payment Confirmed!</p>
                     <p className="text-sm text-green-600">Your order is being processed.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {order.status === 'shipped' && (
-            <div className="border-t mt-6 pt-6">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                    <i className="fas fa-truck text-white text-lg"></i>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-blue-800">Order Shipped!</p>
-                    <p className="text-sm text-blue-600">Your order is on the way!</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {order.status === 'delivered' && (
-            <div className="border-t mt-6 pt-6">
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
-                    <i className="fas fa-gift text-white text-lg"></i>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-purple-800">Order Delivered!</p>
-                    <p className="text-sm text-purple-600">Thank you for shopping with us!</p>
                   </div>
                 </div>
               </div>

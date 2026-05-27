@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { getUserOrders } from '../../services/orderService';
-import toast from 'react-hot-toast';
 
 const OrderList = () => {
   const [orders, setOrders] = useState([]);
@@ -21,7 +20,6 @@ const OrderList = () => {
   useEffect(() => {
     loadOrders();
     
-    // Auto-refresh orders every 5 seconds
     const interval = setInterval(() => {
       loadOrders();
     }, 5000);

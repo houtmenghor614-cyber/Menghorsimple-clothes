@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { verifyPayment } from '../../services/paymentService';
 import toast from 'react-hot-toast';
@@ -28,23 +29,10 @@ const PaymentQR = () => {
     }
   }, [location, navigate]);
 
-  // Auto-check payment every 3 seconds (faster)
-  useEffect(() => {
+  // Auto-check payment every 3 seconds
+  const autoCheckPayment = useCallback(async () => {
     if (!orderId) return;
     
-    const interval = setInterval(() => {
-      if (checkCount < 20) { // Check up to 20 times (60 seconds)
-        autoCheckPayment();
-        setCheckCount(prev => prev + 1);
-      } else {
-        clearInterval(interval);
-      }
-    }, 3000);
-    
-    return () => clearInterval(interval);
-  }, [orderId, checkCount]);
-
-  const autoCheckPayment = async () => {
     try {
       const result = await verifyPayment(orderId);
       if (result.verified) {
@@ -54,7 +42,22 @@ const PaymentQR = () => {
     } catch (error) {
       // Silent fail, continue checking
     }
-  };
+  }, [orderId, navigate]);
+
+  useEffect(() => {
+    if (!orderId) return;
+    
+    const interval = setInterval(() => {
+      if (checkCount < 20) {
+        autoCheckPayment();
+        setCheckCount(prev => prev + 1);
+      } else {
+        clearInterval(interval);
+      }
+    }, 3000);
+    
+    return () => clearInterval(interval);
+  }, [orderId, checkCount, autoCheckPayment]);
 
   const handleVerify = async () => {
     setVerifying(true);
@@ -76,7 +79,6 @@ const PaymentQR = () => {
   const openPaymentPage = () => {
     if (paymentUrl) {
       window.open(paymentUrl, '_blank');
-      // Start auto-checking after opening payment page
       setCheckCount(0);
     }
   };
