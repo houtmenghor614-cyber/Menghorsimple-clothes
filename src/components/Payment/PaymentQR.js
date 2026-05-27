@@ -29,7 +29,6 @@ const PaymentQR = () => {
     }
   }, [location, navigate]);
 
-  // Auto-check payment every 3 seconds
   const autoCheckPayment = useCallback(async () => {
     if (!orderId) return;
     
@@ -40,7 +39,7 @@ const PaymentQR = () => {
         navigate('/payment/success');
       }
     } catch (error) {
-      // Silent fail, continue checking
+      // Silent fail
     }
   }, [orderId, navigate]);
 
@@ -133,7 +132,7 @@ const PaymentQR = () => {
           <div className="mt-6 p-4 bg-blue-50 rounded-lg">
             <p className="text-sm text-blue-800">
               <i className="fas fa-info-circle mr-2"></i>
-              After payment, the page will automatically detect your payment within 3-5 seconds!
+              After payment, the page will automatically detect your payment!
             </p>
           </div>
         </div>

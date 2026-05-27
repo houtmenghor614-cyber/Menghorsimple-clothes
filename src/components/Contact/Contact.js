@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { FaMapMarkerAlt, FaPhone, FaEnvelope, FaClock } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
 const Contact = () => {
@@ -19,7 +18,6 @@ const Contact = () => {
     e.preventDefault();
     setSending(true);
     
-    // Simulate sending email (replace with actual API call)
     setTimeout(() => {
       toast.success('Message sent successfully! We will get back to you soon.');
       setFormData({ name: '', email: '', subject: '', message: '' });
@@ -47,7 +45,7 @@ const Contact = () => {
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <FaMapMarkerAlt className="text-indigo-600" />
+                    <i className="fas fa-map-marker-alt text-indigo-600"></i>
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-800">Visit Us</h3>
@@ -57,7 +55,7 @@ const Contact = () => {
                 
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <FaPhone className="text-indigo-600" />
+                    <i className="fas fa-phone text-indigo-600"></i>
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-800">Call Us</h3>
@@ -68,7 +66,7 @@ const Contact = () => {
                 
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <FaEnvelope className="text-indigo-600" />
+                    <i className="fas fa-envelope text-indigo-600"></i>
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-800">Email Us</h3>
@@ -79,7 +77,7 @@ const Contact = () => {
                 
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <FaClock className="text-indigo-600" />
+                    <i className="fas fa-clock text-indigo-600"></i>
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-800">Working Hours</h3>
@@ -91,22 +89,38 @@ const Contact = () => {
               </div>
             </div>
 
-            {/* Social Links */}
+            {/* Social Links - Fixed anchor tags */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h3 className="font-semibold text-gray-800 mb-4">Follow Us</h3>
               <div className="flex gap-4">
-                <a href="#" className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center hover:bg-indigo-700 transition">
+                <button 
+                  onClick={() => window.open('https://facebook.com', '_blank')}
+                  className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center hover:bg-indigo-700 transition"
+                  aria-label="Facebook"
+                >
                   <i className="fab fa-facebook-f text-white"></i>
-                </a>
-                <a href="#" className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center hover:bg-indigo-700 transition">
+                </button>
+                <button 
+                  onClick={() => window.open('https://instagram.com', '_blank')}
+                  className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center hover:bg-indigo-700 transition"
+                  aria-label="Instagram"
+                >
                   <i className="fab fa-instagram text-white"></i>
-                </a>
-                <a href="#" className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center hover:bg-indigo-700 transition">
+                </button>
+                <button 
+                  onClick={() => window.open('https://twitter.com', '_blank')}
+                  className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center hover:bg-indigo-700 transition"
+                  aria-label="Twitter"
+                >
                   <i className="fab fa-twitter text-white"></i>
-                </a>
-                <a href="#" className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center hover:bg-indigo-700 transition">
+                </button>
+                <button 
+                  onClick={() => window.open('https://telegram.org', '_blank')}
+                  className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center hover:bg-indigo-700 transition"
+                  aria-label="Telegram"
+                >
                   <i className="fab fa-telegram text-white"></i>
-                </a>
+                </button>
               </div>
             </div>
           </div>

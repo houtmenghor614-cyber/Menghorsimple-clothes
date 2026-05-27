@@ -47,10 +47,7 @@ const OrderDetail = () => {
       try {
         const result = await verifyPayment(order.order_number);
         if (result.verified && isMounted) {
-          toast.success('🎉 Payment detected! Your order is now confirmed!', {
-            duration: 5000,
-            icon: '✅'
-          });
+          toast.success('🎉 Payment detected! Your order is now confirmed!');
           await loadOrder();
         }
       } catch (error) {
@@ -71,11 +68,8 @@ const OrderDetail = () => {
     try {
       const response = await initiatePayment(order.id);
       if (response.payment_url) {
-        const paymentWindow = window.open(response.payment_url, '_blank');
-        toast.success('Payment page opened! Complete payment - it will be detected automatically.', {
-          duration: 5000
-        });
-        if (paymentWindow) paymentWindow.focus();
+        window.open(response.payment_url, '_blank');
+        toast.success('Payment page opened! It will be detected automatically.');
       } else {
         toast.error('No payment URL received');
       }
@@ -154,7 +148,7 @@ const OrderDetail = () => {
             <div>
               <h1 className="text-2xl font-bold">Order #{order.order_number}</h1>
               <p className="text-gray-600 mt-1">
-                Placed on {new Date(order.created_at).toLocaleDateString()} at {new Date(order.created_at).toLocaleTimeString()}
+                Placed on {new Date(order.created_at).toLocaleDateString()}
               </p>
             </div>
             <div className="mt-3 md:mt-0">
@@ -259,7 +253,7 @@ const OrderDetail = () => {
                 </button>
               </div>
               <p className="text-xs text-gray-500 text-center mt-4">
-                Auto-check runs every 3 seconds. Your order will update automatically when payment is complete.
+                Auto-check runs every 3 seconds. Your order will update automatically.
               </p>
             </div>
           )}
