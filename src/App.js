@@ -9,6 +9,8 @@ import PrivateRoute from './components/Auth/PrivateRoute';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import Home from './components/Home/Home';
+import About from './components/About/About';
+import Contact from './components/Contact/Contact';
 import ProductList from './components/Products/ProductList';
 import ProductDetail from './components/Products/ProductDetail';
 import Cart from './components/Cart/Cart';
@@ -20,18 +22,15 @@ import PaymentSuccess from './components/Payment/PaymentSuccess';
 
 function App() {
   return (
-    <BrowserRouter
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-      }}
-    >
+    <BrowserRouter>
       <AuthProvider>
         <CartProvider>
           <ProductProvider>
             <Layout>
               <Routes>
                 <Route path="/" element={<Home />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/products" element={<ProductList />} />

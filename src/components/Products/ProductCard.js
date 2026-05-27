@@ -1,19 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useCart } from '../../context/CartContext';
-import toast from 'react-hot-toast';
 
 const ProductCard = ({ product }) => {
-  const { addToCart } = useCart();
-  
-  const handleAddToCart = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addToCart(product, 1);
-    toast.success('Added to cart!');
-  };
-  
-  const discountedPrice = product.discount_price || product.original_price;
   const discountPercent = product.discount_price 
     ? Math.round(((product.original_price - product.discount_price) / product.original_price) * 100)
     : 0;
@@ -22,49 +10,53 @@ const ProductCard = ({ product }) => {
   const imageUrl = product.main_image ? `${BASE_URL}${product.main_image}` : null;
   
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+    <div className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 product-card">
       <Link to={`/products/${product.id}`} className="block">
-        <div className="relative overflow-hidden h-64">
+        <div className="relative overflow-hidden h-72">
           {imageUrl ? (
             <img
               src={imageUrl}
               alt={product.title}
-              className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             />
           ) : (
             <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-              <i className="fas fa-image text-4xl text-gray-400"></i>
+              <i className="fas fa-image text-5xl text-gray-300"></i>
             </div>
           )}
           {discountPercent > 0 && (
-            <span className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-sm font-semibold">
+            <div className="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-lg text-xs font-semibold">
               -{discountPercent}%
-            </span>
+            </div>
           )}
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+            <span className="bg-white text-gray-900 px-6 py-2 rounded-full text-sm font-semibold transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+              Quick View
+            </span>
+          </div>
         </div>
         
         <div className="p-4">
-          <h3 className="font-semibold text-lg mb-2 text-gray-800 hover:text-indigo-600 transition line-clamp-1">
+          <h3 className="font-semibold text-gray-800 mb-2 line-clamp-1 group-hover:text-indigo-600 transition">
             {product.title}
           </h3>
           
-          <div className="flex items-center space-x-2 mb-3">
+          <div className="flex items-center gap-2">
             {product.discount_price ? (
               <>
-                <span className="text-2xl font-bold text-indigo-600">
+                <span className="text-xl font-bold text-indigo-600">
                   ${product.discount_price}
                 </span>
-                <span className="text-gray-400 line-through">
+                <span className="text-gray-400 line-through text-sm">
                   ${product.original_price}
                 </span>
               </>
             ) : (
-              <span className="text-2xl font-bold text-indigo-600">
+              <span className="text-xl font-bold text-indigo-600">
                 ${product.original_price}
               </span>
             )}
           </div>
-          
         </div>
       </Link>
     </div>

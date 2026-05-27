@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getOrderDetail } from '../../services/orderService';
 import { initiatePayment, verifyPayment } from '../../services/paymentService';
@@ -10,42 +10,17 @@ const OrderDetail = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [checkingPayment, setCheckingPayment] = useState(false);
-  const [autoCheckComplete, setAutoCheckComplete] = useState(false);
+  const [paymentDetected, setPaymentDetected] = useState(false);
 
   const BASE_URL = 'http://127.0.0.1:8000';
 
-  useEffect(() => {
-    loadOrder();
-  }, [id]);
-
-  // Auto-check payment status every 5 seconds
-  useEffect(() => {
-    if (order && order.status === 'pending' && !autoCheckComplete) {
-      // Check immediately
-      autoCheckPaymentStatus();
-      
-      // Then check every 5 seconds
-      const interval = setInterval(() => {
-        autoCheckPaymentStatus();
-      }, 5000);
-      
-      // Stop checking after 60 seconds (12 attempts)
-      const timeout = setTimeout(() => {
-        setAutoCheckComplete(true);
-        clearInterval(interval);
-      }, 60000);
-      
-      return () => {
-        clearInterval(interval);
-        clearTimeout(timeout);
-      };
-    }
-  }, [order]);
-
-  const loadOrder = async () => {
+  const loadOrder = useCallback(async () => {
     try {
       const data = await getOrderDetail(id);
       setOrder(data);
+      if (data.status === 'paid') {
+        setPaymentDetected(true);
+      }
     } catch (error) {
       console.error('Failed to load order:', error);
       toast.error('Order not found');
@@ -53,15 +28,70 @@ const OrderDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, navigate]);
+
+  useEffect(() => {
+    loadOrder();
+  }, [loadOrder]);
+
+  // Auto-check payment status every 3 seconds
+  useEffect(() => {
+    if (!order || order.status !== 'pending') return;
+    
+    let isMounted = true;
+    let checkCount = 0;
+    const maxChecks = 20; // Check for 60 seconds (20 * 3s)
+    
+    const checkPayment = async () => {
+      if (!isMounted) return;
+      if (order.status !== 'pending') return;
+      if (checkCount >= maxChecks) {
+        console.log('Auto-check stopped after max attempts');
+        return;
+      }
+      
+      checkCount++;
+      try {
+        const result = await verifyPayment(order.order_number);
+        if (result.verified && isMounted) {
+          setPaymentDetected(true);
+          toast.success('🎉 Payment detected! Your order is now confirmed!', {
+            duration: 5000,
+            icon: '✅'
+          });
+          await loadOrder();
+        }
+      } catch (error) {
+        // Silent fail, continue checking
+      }
+    };
+    
+    // Check immediately
+    checkPayment();
+    
+    // Then check every 3 seconds
+    const interval = setInterval(checkPayment, 3000);
+    
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [order, loadOrder]);
 
   const handlePayNow = async () => {
     try {
       const response = await initiatePayment(order.id);
       if (response.payment_url) {
-        setAutoCheckComplete(false);
-        window.open(response.payment_url, '_blank');
-        toast.success('Payment page opened! After payment, click "I Have Paid" to confirm.');
+        // Open payment in new tab
+        const paymentWindow = window.open(response.payment_url, '_blank');
+        
+        // Show instruction toast
+        toast.success('Payment page opened! Complete payment - it will be detected automatically.', {
+          duration: 5000
+        });
+        
+        // Focus on the payment window
+        if (paymentWindow) paymentWindow.focus();
       } else {
         toast.error('No payment URL received');
       }
@@ -71,22 +101,7 @@ const OrderDetail = () => {
     }
   };
 
-  const autoCheckPaymentStatus = async () => {
-    if (!order || order.status !== 'pending') return;
-    
-    try {
-      const result = await verifyPayment(order.order_number);
-      if (result.verified) {
-        toast.success('✅ Payment detected! Your order is now confirmed.');
-        await loadOrder();
-        setAutoCheckComplete(true);
-      }
-    } catch (error) {
-      // Silent fail for auto-check
-    }
-  };
-
-  const handleCheckPaymentStatus = async () => {
+  const handleManualCheck = async () => {
     setCheckingPayment(true);
     try {
       const result = await verifyPayment(order.order_number);
@@ -94,30 +109,11 @@ const OrderDetail = () => {
         toast.success('✅ Payment confirmed! Your order is now paid.');
         await loadOrder();
       } else {
-        toast.error('Payment not found. If you just paid, please wait a moment or use "Force Mark as Paid".');
+        toast.error('Payment not found. If you just paid, please wait a moment.');
       }
     } catch (error) {
       console.error('Verification failed:', error);
       toast.error('Failed to check payment status');
-    } finally {
-      setCheckingPayment(false);
-    }
-  };
-
-  const handleForcePaid = async () => {
-    setCheckingPayment(true);
-    try {
-      const response = await fetch(`http://127.0.0.1:8000/api/orders/${order.id}/mark-paid`, {
-        method: 'PATCH'
-      });
-      if (response.ok) {
-        toast.success('✅ Order marked as paid!');
-        await loadOrder();
-      } else {
-        toast.error('Failed to update order');
-      }
-    } catch (error) {
-      toast.error('Error updating order');
     } finally {
       setCheckingPayment(false);
     }
@@ -179,7 +175,7 @@ const OrderDetail = () => {
             </div>
             <div className="mt-3 md:mt-0">
               <span className={`${getStatusColor(order.status)} text-white px-3 py-1 rounded-full text-sm font-semibold inline-flex items-center gap-1`}>
-                <i className={`fas ${order.status === 'paid' ? 'fa-check-circle' : order.status === 'pending' ? 'fa-clock' : 'fa-circle'}`}></i>
+                <i className={`fas ${order.status === 'paid' ? 'fa-check-circle' : 'fa-clock'}`}></i>
                 {getStatusBadge(order.status)}
               </span>
             </div>
@@ -241,26 +237,29 @@ const OrderDetail = () => {
           
           {order.status === 'pending' && (
             <div className="border-t mt-6 pt-6">
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                 <div className="flex items-center gap-2">
-                  <i className="fas fa-info-circle text-yellow-600"></i>
-                  <p className="text-sm text-yellow-800">
-                    <strong>Payment Instructions:</strong> Click "Pay Now" to open KHQR. After completing payment, click "I Have Paid" to confirm.
-                  </p>
+                  <i className="fas fa-info-circle text-blue-500 text-lg"></i>
+                  <div>
+                    <p className="font-semibold text-blue-800">Auto Payment Detection Active</p>
+                    <p className="text-sm text-blue-600">
+                      Payment will be detected automatically within 3-5 seconds after completion!
+                    </p>
+                  </div>
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={handlePayNow}
-                  className="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+                  className="flex-1 bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition flex items-center justify-center gap-2"
                 >
                   <i className="fas fa-credit-card"></i>
                   Pay Now
                 </button>
                 <button
-                  onClick={handleCheckPaymentStatus}
+                  onClick={handleManualCheck}
                   disabled={checkingPayment}
-                  className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {checkingPayment ? (
                     <>
@@ -269,22 +268,14 @@ const OrderDetail = () => {
                     </>
                   ) : (
                     <>
-                      <i className="fas fa-check-circle"></i>
-                      I Have Paid (Check Status)
+                      <i className="fas fa-sync-alt"></i>
+                      Check Status
                     </>
                   )}
                 </button>
-                <button
-                  onClick={handleForcePaid}
-                  disabled={checkingPayment}
-                  className="flex-1 bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  <i className="fas fa-check-double"></i>
-                  Force Mark as Paid
-                </button>
               </div>
               <p className="text-xs text-gray-500 text-center mt-4">
-                Auto-check runs every 5 seconds. Payment will be detected automatically.
+                Auto-check runs every 3 seconds. Your order will update automatically when payment is complete.
               </p>
             </div>
           )}
@@ -292,8 +283,10 @@ const OrderDetail = () => {
           {order.status === 'paid' && (
             <div className="border-t mt-6 pt-6">
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-center">
-                  <i className="fas fa-check-circle text-green-500 text-xl mr-3"></i>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                    <i className="fas fa-check text-white text-lg"></i>
+                  </div>
                   <div>
                     <p className="font-semibold text-green-800">Payment Confirmed!</p>
                     <p className="text-sm text-green-600">Your order is being processed.</p>
@@ -306,8 +299,10 @@ const OrderDetail = () => {
           {order.status === 'shipped' && (
             <div className="border-t mt-6 pt-6">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center">
-                  <i className="fas fa-truck text-blue-500 text-xl mr-3"></i>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                    <i className="fas fa-truck text-white text-lg"></i>
+                  </div>
                   <div>
                     <p className="font-semibold text-blue-800">Order Shipped!</p>
                     <p className="text-sm text-blue-600">Your order is on the way!</p>
@@ -320,8 +315,10 @@ const OrderDetail = () => {
           {order.status === 'delivered' && (
             <div className="border-t mt-6 pt-6">
               <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                <div className="flex items-center">
-                  <i className="fas fa-gift text-purple-500 text-xl mr-3"></i>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
+                    <i className="fas fa-gift text-white text-lg"></i>
+                  </div>
                   <div>
                     <p className="font-semibold text-purple-800">Order Delivered!</p>
                     <p className="text-sm text-purple-600">Thank you for shopping with us!</p>

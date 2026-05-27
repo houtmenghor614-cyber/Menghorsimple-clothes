@@ -1,14 +1,16 @@
 import React from 'react';
 import Hero from './Hero';
-import Categories from './Categories';
 import FeaturedProducts from './FeaturedProducts';
+import About from '../About/About';
+import Contact from '../Contact/Contact';
 
 const Home = () => {
   return (
     <div>
       <Hero />
-      <Categories />
+      <About/>
       <FeaturedProducts />
+      <Contact/>
     </div>
   );
 };

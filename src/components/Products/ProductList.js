@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import ProductCard from './ProductCard';
 import ProductFilter from './ProductFilter';
 import { getProducts, getCategories } from '../../services/productService';
@@ -9,7 +9,8 @@ const ProductList = () => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const [filters, setFilters] = useState({
     category: searchParams.get('category') || '',
     search: '',
@@ -17,10 +18,22 @@ const ProductList = () => {
     maxPrice: ''
   });
 
+  // Load products and categories
   useEffect(() => {
     loadData();
   }, []);
 
+  // Watch for URL param changes - THIS IS THE KEY FIX
+  useEffect(() => {
+    const categoryFromUrl = searchParams.get('category');
+    if (categoryFromUrl) {
+      setFilters(prev => ({ ...prev, category: categoryFromUrl }));
+    } else {
+      setFilters(prev => ({ ...prev, category: '' }));
+    }
+  }, [location.search, searchParams]);
+
+  // Filter products whenever products or filters change
   useEffect(() => {
     filterProducts();
   }, [products, filters]);
@@ -33,11 +46,6 @@ const ProductList = () => {
       ]);
       setProducts(productsData);
       setCategories(categoriesData);
-      
-      const categoryParam = searchParams.get('category');
-      if (categoryParam) {
-        setFilters(prev => ({ ...prev, category: categoryParam }));
-      }
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -48,16 +56,20 @@ const ProductList = () => {
   const filterProducts = () => {
     let filtered = [...products];
     
+    // Filter by category
     if (filters.category) {
       filtered = filtered.filter(p => p.category_id === parseInt(filters.category));
+      console.log(`Filtering by category ${filters.category}, found ${filtered.length} products`);
     }
     
+    // Filter by search
     if (filters.search) {
       filtered = filtered.filter(p => 
         p.title.toLowerCase().includes(filters.search.toLowerCase())
       );
     }
     
+    // Filter by price
     if (filters.minPrice) {
       const price = parseFloat(filters.minPrice);
       filtered = filtered.filter(p => {
@@ -77,6 +89,16 @@ const ProductList = () => {
     setFilteredProducts(filtered);
   };
 
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+    // Update URL when category changes
+    if (newFilters.category) {
+      setSearchParams({ category: newFilters.category });
+    } else {
+      setSearchParams({});
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-16">
@@ -85,27 +107,46 @@ const ProductList = () => {
     );
   }
 
+  const currentCategory = categories.find(c => c.id === parseInt(filters.category));
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col lg:flex-row gap-8">
+        {/* Sidebar Filter */}
         <div className="lg:w-1/4">
           <ProductFilter 
             categories={categories}
             filters={filters}
-            setFilters={setFilters}
+            setFilters={handleFilterChange}
           />
         </div>
         
+        {/* Products Grid */}
         <div className="lg:w-3/4">
+          {/* Category Title */}
+          {currentCategory && (
+            <div className="mb-6">
+              <h2 className="text-3xl font-bold text-gray-800">{currentCategory.name}</h2>
+              <p className="text-gray-500 mt-1">Discover our {currentCategory.name} collection</p>
+            </div>
+          )}
+          
           <div className="mb-4 flex justify-between items-center">
             <p className="text-gray-600">
-              Found {filteredProducts.length} products
+              Found <span className="font-semibold text-indigo-600">{filteredProducts.length}</span> products
             </p>
           </div>
           
           {filteredProducts.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-gray-500 text-lg">No products found</p>
+            <div className="text-center py-16 bg-white rounded-lg shadow-sm">
+              <i className="fas fa-search text-6xl text-gray-300 mb-4"></i>
+              <p className="text-gray-500 text-lg">No products found in this category</p>
+              <button 
+                onClick={() => handleFilterChange({ ...filters, category: '' })}
+                className="mt-4 text-indigo-600 hover:text-indigo-700 font-medium"
+              >
+                View all products
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
