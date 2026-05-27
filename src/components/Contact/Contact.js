@@ -18,11 +18,16 @@ const Contact = () => {
     e.preventDefault();
     setSending(true);
     
+    // Simulate sending
     setTimeout(() => {
       toast.success('Message sent successfully! We will get back to you soon.');
       setFormData({ name: '', email: '', subject: '', message: '' });
       setSending(false);
     }, 1000);
+  };
+
+  const openSocial = (url) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -89,33 +94,33 @@ const Contact = () => {
               </div>
             </div>
 
-            {/* Social Links - Fixed anchor tags */}
+            {/* Social Links */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h3 className="font-semibold text-gray-800 mb-4">Follow Us</h3>
               <div className="flex gap-4">
                 <button 
-                  onClick={() => window.open('https://facebook.com', '_blank')}
+                  onClick={() => openSocial('https://facebook.com')}
                   className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center hover:bg-indigo-700 transition"
                   aria-label="Facebook"
                 >
                   <i className="fab fa-facebook-f text-white"></i>
                 </button>
                 <button 
-                  onClick={() => window.open('https://instagram.com', '_blank')}
+                  onClick={() => openSocial('https://instagram.com')}
                   className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center hover:bg-indigo-700 transition"
                   aria-label="Instagram"
                 >
                   <i className="fab fa-instagram text-white"></i>
                 </button>
                 <button 
-                  onClick={() => window.open('https://twitter.com', '_blank')}
+                  onClick={() => openSocial('https://twitter.com')}
                   className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center hover:bg-indigo-700 transition"
                   aria-label="Twitter"
                 >
                   <i className="fab fa-twitter text-white"></i>
                 </button>
                 <button 
-                  onClick={() => window.open('https://telegram.org', '_blank')}
+                  onClick={() => openSocial('https://telegram.org')}
                   className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center hover:bg-indigo-700 transition"
                   aria-label="Telegram"
                 >

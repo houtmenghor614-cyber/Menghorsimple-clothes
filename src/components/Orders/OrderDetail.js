@@ -206,13 +206,6 @@ const OrderDetail = () => {
             </div>
           </div>
           
-          {order.payment_transaction_id && (
-            <div className="border-t mt-6 pt-6">
-              <p className="text-gray-600 mb-1">Transaction ID:</p>
-              <p className="font-mono text-sm bg-gray-100 p-2 rounded">{order.payment_transaction_id}</p>
-            </div>
-          )}
-          
           {order.status === 'pending' && (
             <div className="border-t mt-6 pt-6">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
